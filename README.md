@@ -2,6 +2,8 @@
 
 **Electrical Installation Helper**는 전기기능사 필기 3과목 및 전기(공사)기사 및 전기(공사)산업기사 필기 5과목 공부하는 학생들이 효율적으로 학습할 수 있도록 도와주는 챗봇입니다.
 
+> 🟢 **Node.js 버전**: [`node/`](./node) 폴더에서 Python/Streamlit 버전을 Node.js(Express)로 포팅한 앱을 제공합니다. 실행 방법은 [node/README.md](./node/README.md)를 참고하세요. Supabase 데이터 구조가 동일하여 두 버션 간 대화 데이터가 호환됩니다.
+
 ---
 
 ## 라이선스

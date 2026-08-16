@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>나만의 AI 전기설비 도우미</title>
+  <link rel="icon" href="https://cdn.phototourl.com/free/2026-07-23-15287eb1-a0dc-42f5-895b-ba283e857248.png" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- ☰ 모바일용 사이드바 토글 -->
+    <button id="sidebarToggle" type="button" aria-label="메뉴">☰</button>
+
+    <!-- ==================== 사이드바 ==================== -->
+    <aside id="sidebar">
+      <img id="sidebarHeaderImage" src="https://cdn.phototourl.com/free/2026-07-23-b00d3b3d-b411-4d1e-a452-24355967b5ce.png" alt="전기설비 도우미" />
+
+      <!-- 👤 계정 메뉴 -->
+      <section id="accountSection">
+        <h3>👤 계정 메뉴</h3>
+
+        <!-- 게스트: 로그인/회원가입 탭 -->
+        <div id="authBox">
+          <div class="tabs">
+            <button type="button" class="tab active" data-tab="login">🔑 로그인</button>
+            <button type="button" class="tab" data-tab="signup">📝 회원가입</button>
+          </div>
+
+          <form id="loginForm" class="auth-form">
+            <input type="text" id="loginUserId" placeholder="아이디를 입력하세요" autocomplete="username" />
+            <input type="password" id="loginPassword" placeholder="비밀번호를 입력하세요" autocomplete="current-password" />
+            <button type="submit" class="btn primary">로그인</button>
+          </form>
+
+          <form id="signupForm" class="auth-form hidden">
+            <input type="text" id="signupUserId" placeholder="3자 이상 영문/숫자" autocomplete="username" />
+            <input type="password" id="signupPassword" placeholder="6자 이상" autocomplete="new-password" />
+            <input type="password" id="signupConfirm" placeholder="다시 입력" autocomplete="new-password" />
+            <button type="submit" class="btn primary">회원가입</button>
+          </form>
+
+          <div class="guest-notice">
+            🎭 <b>게스트 모드</b>로 이용 중입니다.<br />
+            💡 로그인하면 대화가 <b>영구 저장</b>됩니다!
+          </div>
+        </div>
+
+        <!-- 로그인 상태 -->
+        <div id="userBox" class="hidden">
+          <div id="greeting">👋 안녕하세요!</div>
+          <button type="button" id="logoutBtn" class="btn secondary">🚪 로그아웃</button>
+        </div>
+      </section>
+
+      <hr />
+
+      <!-- 💬 대화 목록 -->
+      <section>
+        <h3>💬 대화 목록</h3>
+        <button type="button" id="newChatBtn" class="btn primary full">➕ 새 대화 시작</button>
+        <ul id="chatList"></ul>
+      </section>
+
+      <!-- 📚 과거 대화 참고 (로그인 전용) -->
+      <section id="refSection" class="hidden">
+        <hr />
+        <h3>📚 과거 대화 참고</h3>
+        <div class="ref-notice">
+          💡 체크한 과거 대화 내용을 AI가 참고하여 답변합니다.<br />
+          (최대 3개 선택 가능, 각 대화의 최근 5개 메시지만 참고)
+        </div>
+        <div id="refList"></div>
+        <div id="refStatus" class="caption"></div>
+      </section>
+
+      <hr />
+
+      <!-- 🖼️ 이미지 입력 -->
+      <section>
+        <h3>🖼️ 이미지 입력</h3>
+        <div class="ref-notice">
+          💡 분석하거나 참고할 이미지를 업로드하세요.<br />
+          (지원 형식: PNG, JPG, JPEG, WEBP)
+        </div>
+        <input type="file" id="imageInput" accept=".png,.jpg,.jpeg,.webp" />
+        <div id="imagePreviewBox" class="hidden">
+          <img id="imagePreview" alt="업로드된 이미지 미리보기" />
+          <div class="success-text">✅ 이미지가 성공적으로 업로드되었습니다. (메시지 입력 시 함께 분석됩니다)</div>
+          <button type="button" id="imageClearBtn" class="btn secondary small">이미지 제거</button>
+        </div>
+      </section>
+
+      <hr />
+
+      <!-- 📁 수동 백업 -->
+      <section>
+        <h3>📁 수동으로 대화 백업 &amp; 불러오기</h3>
+        <button type="button" id="exportBtn" class="btn secondary full">📥 현재 대화 JSON 저장</button>
+        <label class="import-label">
+          📤 JSON 대화 불러오기
+          <input type="file" id="importInput" accept=".json" />
+        </label>
+      </section>
+    </aside>
+
+    <!-- ==================== 메인 ==================== -->
+    <main id="main">
+      <h1 class="title">⚡ 나만의 AI 전기설비 도우미 ⚡</h1>
+      <p class="subtitle">전기 기능사/산업기사/기사 합격을 위한 맞춤형 AI 튜터</p>
+
+      <div id="guestBanner" class="guest-notice">
+        🎭 <b>게스트 모드</b>로 이용 중입니다. 대화는 브라우저를 닫으면 사라집니다.<br />
+        👉 좌측 사이드바에서 <b>회원가입</b> 후 로그인하면 대화가 영구 저장됩니다!
+      </div>
+
+      <div id="refBanner" class="ref-notice hidden"></div>
+      <div id="caption" class="caption"></div>
+
+      <div id="messages"></div>
+
+      <div id="emptyInfo" class="info-box">
+        👋 <b>반갑습니다!</b> 무엇이든 물어보세요.<br />
+        예시: <i>"접지공사 종류에 대해 알려줘"</i>
+      </div>
+
+      <div id="inputBox">
+        <textarea id="chatInput" rows="1" placeholder="질문을 입력하세요 (이미지 첨부가능)"></textarea>
+        <button type="button" id="sendBtn" aria-label="전송">➤</button>
+      </div>
+    </main>
+  </div>
+
+  <!-- 토스트 알림 (st.success / st.error 대응) -->
+  <div id="toastBox"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
