@@ -1,0 +1,7 @@
+dist
+node_modules
+python
+data
+bun.lock
+package-lock.json
+*.md

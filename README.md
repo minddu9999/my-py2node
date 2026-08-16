@@ -1,80 +1,88 @@
-# Electrical Installation Helper (전기설비 도우미)
+# ⚡ Electrical Installation Helper (나만의 AI 전기설비 도우미)
 
-**Electrical Installation Helper**는 전기기능사 필기 3과목 및 전기(공사)기사 및 전기(공사)산업기사 필기 5과목 공부하는 학생들이 효율적으로 학습할 수 있도록 도와주는 챗봇입니다.
+**Electrical Installation Helper**는 전기기능사 필기 3과목 및 전기(공사)기사·전기(공사)산업기사 필기 5과목을 공부하는 학생을 위한 AI 챗봇입니다. 2026년 1월 기준 최신 KEC 규정 데이터를 참고해 답변합니다.
 
-> 🟢 **Node.js 버전**: [`node/`](./node) 폴더에서 Python/Streamlit 버전을 Node.js(Express)로 포팅한 앱을 제공합니다. 실행 방법은 [node/README.md](./node/README.md)를 참고하세요. Supabase 데이터 구조가 동일하여 두 버션 간 대화 데이터가 호환됩니다.
+> 원본 Python/Streamlit 버전은 [`python/`](./python) 폴더에 보존되어 있습니다.
+> 두 버전은 동일한 Supabase `user_chats` 테이블을 사용하므로 대화 데이터가 호환됩니다.
 
----
+## 🚀 시작하기
+
+```bash
+# npm 사용 시
+npm install
+cp .env.example .env   # 값을 채워 넣으세요
+npm run dev            # http://localhost:8080
+
+# bun 사용 시
+bun install
+bun run dev
+```
+
+### 환경변수 (`.env`)
+
+| 변수 | 설명 |
+|---|---|
+| `VITE_NVIDIA_API_KEY` | AI API 키 (ollama.com v1 호환 엔드포인트) |
+| `VITE_SUPABASE_URL` | Supabase 프로젝트 URL |
+| `VITE_SUPABASE_ANON_KEY` | Supabase anon key |
+| `VITE_AI_BASE_URL` | (선택) 기본값 `https://ollama.com/v1` |
+| `VITE_AI_MODEL` | (선택) 기본값 `gemma4:31b-cloud` |
+
+> ⚠️ **보안 주의**: `VITE_` 변수는 브라우저 번들에 포함되어 외부에 노출될 수 있습니다.
+> 공개 서비스로 배포할 때는 AI 키를 서버/엣지 함수(예: Supabase Edge Functions)로 분리하는 것을 권장합니다.
+> 또한 브라우저에서 직접 AI API를 호출할 때 CORS 정책에 따라 프록시가 필요할 수 있습니다 — 그 경우 `VITE_AI_BASE_URL`을 프록시 주소로 지정하세요.
+
+### Supabase 테이블 스키마 (`user_chats`)
+
+```sql
+create table user_chats (
+  id uuid primary key,
+  user_id uuid not null,
+  title text,
+  messages jsonb default '[]',
+  updated_at timestamptz default now()
+);
+```
+
+## 📁 프로젝트 구조
+
+```
+.lovable/            Lovable 스타일 구성 마커
+public/              정적 에셋 (favicon)
+src/
+  components/        UI 컴포넌트 (사이드바, 채팅, 인증 폼)
+  components/ui/     shadcn/ui 기본 컴포넌트
+  hooks/             useAuth, useChatStore
+  lib/               RAG, AI 스트리밍, 백업, Supabase 클라이언트, 상수
+  pages/             페이지 (Index)
+data/                KEC 규정 텍스트 파일 202개 (RAG용, 빌드 시 번들 포함)
+python/              원본 Python/Streamlit 버전
+```
+
+## ✨ 주요 기능
+
+- **최신 개정 규정 안내** — 2026년 1월 개정 KEC 규정 기준, 질문과 관련도 높은 규정 파일 상위 2개를 자동 선별(파일당 2,000자)해 참고합니다.
+- **4지선다 문제 출제** — "문제를 만들어 줘" 요청에 1~4 선택지 형식으로 출제.
+- **이미지 문제 해설** — 배선도/기기 사진/문제 이미지 업로드 후 질문하면 비전 모델이 분석합니다.
+- **계정별 대화 저장** — Supabase 인증(아이디/비밀번호)으로 대화 영구 저장. 게스트도 사용 가능(브라우저 세션에만 저장).
+- **과거 대화 참고** — 이전 대화 최대 3개를 선택하면 AI가 맥락을 참고해 답변.
+- **대화 백업** — 현재 대화를 JSON으로 내보내기/불러오기.
+- **스트리밍 답변** — 답변이 실시간으로 출력됩니다.
+
+## 🔧 기술 스택
+
+- React 18 + TypeScript + Vite
+- Tailwind CSS v4 + shadcn/ui 스타일 컴포넌트
+- Supabase (인증 + DB, RLS)
+- OpenAI 호환 API (스트리밍)
 
 ## 라이선스
-**MIT license**
 
-본 프로젝트는 NAVER OGQ 공모전 출품을 목적으로 제작되었습니다.
-
-## 주요 기능
-
-- **각 과목 내용에 맞는 KEC규정 알리미**
-  - 학생들이 궁금해하는 KEC규정에 맞는 전기설비 기준을 최신에 개정된(2026년 1월 기준) 규정으로 알려주는 챗봇 서비스입니다.
-
-## 주 목적(문제점+배경)
-
-- **현재 CBT사이트들의 설비 과목에 대한 해설은 상세하지 않아 정확한 개념을 알기 어려운 점이 있습니다.**
-  - CBT사이트의 해설중 일부는 개정전의 규정을 기준으로 만들어진 예전문제에 맞게 해설이 있는 경우가 존재하여 최신 규정이 반영되어 있지 않은 해설이 있습니다.
-- **기존 LLM들은 최신 KEC규정을 알려주지 않아 전기기능사 필기 3과목 및 전기(공사)기사 및 전기(공사)산업기사 필기 5과목(이하 설비 과목)을 공부하는 과정중에 어려움이 있습니다.**
-  - 예를 들면 LLM모델의 지식 컷오프 이후에 개정된 규정에 관해서는 LLM모델이 환각현상으로 인해 정확하지 않은 정보를 알려주는 문제로 인해 설비 과목 공부하는 과정에서 잘못된 정보에 의해 혼란이 있는 등의 문제점이 있습니다.
-  - LLM모델의 지식 컷오프 이전에 개정된 규정에 관한 정보도 올바르지 않거나 타국의 규정을 알려주는 문제로 인하여 설비 과목을 공부하는 과정에서 혼란이 있습니다.
-  - LLM모델이 설비 과목에 관한 정보를 검색기능을 이용하여 알려주는 경우 최신에 개정된 규정이 아닌 이전에 개정된 규정을 알려주는 문제로 인해 혼란이 있습니다.
-- **최신 KEC규정에 맞는 전기설비 기준을 알려주는 챗봇을 만들기로 하였습니다.**
-
-## 주요 기능
-- **최신에 개정된 규정을 알려줍니다.**
-  - 2026년 1월에 개정된 KEC규정에 맞는 정보를 알려줌으로써 잘못된 정보로 인한 혼란을 방지했습니다.
-  - 사용자의 요청시 실제와 비슷한 형식의 문제를 만들고 해설을 알려줍니다.
-  - 사용자의 입력한 이미지에 존재하는 문제의 해설을 알려줍니다.
-
-## 해결가능
-- **구 규정과 신 규정 혼용으로 인한 혼란을 해소 가능합니다.**
-  - KEC(한국전기설비규정)는 주기적으로 개정이 됩니다.
-  - 1000여 쪽에 달하는 KEC 규정중 원하는 내용을 보다 빠르고 정확하게 찾을 수 있습니다.
-  - LLM 사용시 환각으로 발생되는 존재하지 않은 가상의 조항을 알려주는 문제를 해결 가능합니다.
-
-## 작동 원리
-- **KEC규정을 데이터화하다.**
-  - 최신에 규정된 KEC규정을 보다 명확하게 알려주기 위해 약 1000쪽에 달하는 PDF파일을 각 파트별로 나누어 TXT파일에 저장해 API-KEY로 호출한 LLM 모델이 data폴더에 업로드 되어있는 TXT파일을 참고하여 보다 정확한 규정을 알려줍니다.
-  - 모르는 정보에 관해서는 데이터에 없는 파일 또는 정확하지 않은 답변이라 명시하게 되었습니다.
+MIT License — 본 프로젝트는 NAVER OGQ 공모전 출품을 목적으로 제작되었습니다.
 
 ## AI 사용 내역
-- **서비스에 사용한 AI 모델**
-  - gemma-4-31b-it
-- **AI 활용 기능**
-  - 사용자의 이미지 입력 분석
-  - 사용자의 텍스트 입력 분석
-- **개발 과정에서 활용한 AI 모델**
-  - gemini-3.5-flash
-  - qwen-3.7-plus
-  - deepseek-v4-flash
-- **이미지 생성에 활용한 AI 모델**
-  - Nano Banana 2
-  - GPT Image 2
-- **개발 과정에서 활용한 AI 에이전트**
-  - Antigravity
-  - ChatGPT Codex
-- **활용 내용**
-  - 백엔드 개발
-  - 프론트엔드 개발
-  - 코드 리팩토링
 
-## 외부자문
-- 교사 : 초기에 멀티모달 기능을 추가하는 것을 권유.
-- 현직자 : 사용언어 추천
-
-## 사용한 오픈소스 패키지
-| 패키지 | 용도 |
-| -------- | ------- |
-| streamlit | 웹 앱 프레임워크 |
-| openai | OpenAI 호환 API에 요청을 보내고 응답을 처리하는 라이브러리 |
-| python-dotenv | .env파일의 환경변수를 불러오는 라이브러리 |
-| supabase | Supabase의 기능을 파이썬에서 사용하기 위한 공식 SDK |
-| supabase-auth | Supabase SDK의 하위 호환성 라이브러리 |
-| gemma-4-31b-it | 구글의 오픈 웨이트 LLM |
-| opencodex | ChatGPT Codex를 위한 범용 프로바이더 프록시 |
+- **서비스 모델**: gemma-4-31b-it (텍스트/이미지 입력 분석)
+- **개발 지원**: gemini-3.5-flash, qwen-3.7-plus, deepseek-v4-flash
+- **이미지 생성**: Nano Banana 2, GPT Image 2
+- **에이전트**: Antigravity, ChatGPT Codex
